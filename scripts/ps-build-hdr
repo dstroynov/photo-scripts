@@ -112,21 +112,55 @@ gimp_script=$(cat <<-END
 END
 )
 
+log() {
+	echo "$1"
+	echo "$1" >> $log_file
+}
+
+
 build_hdr() {
+	local tmpdir hdr_file ashikhmin_file mantiuk08_file output_file
 	tmpdir=$(mktemp -d)
 	hdr_file=$tmpdir/temp.hdr
 	ashikhmin_file=$tmpdir/ashikhmin.jpg
 	mantiuk08_file=$tmpdir/mantiuk08.jpg
 	output_file=$(pwd)/${1%.*}.ma40.jpg
 
-	echo "Creating HDR-file from images: $@"
+	log "Creating HDR-file"
 	"$luminance_hdr_cli" -a AIS -c $hdr_options -s "$hdr_file" "$@" >> "$log_file" 2>&1
-	echo "Making Ashikhmin layer"
+	if [[ $? != 0 ]]; then
+		echo "Error while executing the following command:"
+		echo "$luminance_hdr_cli" -a AIS -c $hdr_options -s "$hdr_file" "$@"
+		echo "To get more information about the error read $log_file"
+		exit 1;
+	fi
+
+	log "Making Ashikhmin layer"
 	"$luminance_hdr_cli" -l "$hdr_file" -t ashikhmin -p $ashikhmin_options -o "$ashikhmin_file" >> "$log_file" 2>&1
-	echo "Making Mantiuk08 layer"
+	if [[ $? != 0 ]]; then
+		echo "Error while executing the following command:"
+		echo "$luminance_hdr_cli" -l "$hdr_file" -t ashikhmin -p $ashikhmin_options -o "$ashikhmin_file"
+		echo "To get more information about the error read $log_file"
+		exit 1;
+	fi
+
+	log "Making Mantiuk08 layer"
 	"$luminance_hdr_cli" -l "$hdr_file" -t mantiuk08 -p $mantiuk08_options -o "$mantiuk08_file" >> "$log_file" 2>&1
-	echo "Joining layers"
-	"$gimp" -i -b "$gimp_script"' (build-hdr "'"$mantiuk08_file"'" "'"$ashikhmin_file"'" "'"$output_file"'")' -b '(gimp-quit 0)' > "$log_file" 2>&1
+	if [[ $? != 0 ]]; then
+		echo "Error while executing the following command:"
+		echo "$luminance_hdr_cli" -l "$hdr_file" -t mantiuk08 -p $mantiuk08_options -o "$mantiuk08_file"
+		echo "To get more information about the error read $log_file"
+		exit 1;
+	fi
+
+	log "Joining layers"
+	"$gimp" -i -b "$gimp_script"' (build-hdr "'"$mantiuk08_file"'" "'"$ashikhmin_file"'" "'"$output_file"'")' -b '(gimp-quit 0)' >> "$log_file" 2>&1
+	if [[ $? != 0 ]]; then
+		echo "Error while executing the following command:"
+		echo "$gimp " -i -b "$gimp_script"' (build-hdr "'"$mantiuk08_file"'" "'"$ashikhmin_file"'" "'"$output_file"'")' -b '(gimp-quit 0)'
+		echo "To get more information about the error read $log_file"
+		exit 1;
+	fi
 
 	rm -rf "$TMPDIR"
 }
@@ -135,6 +169,10 @@ if [[ "$#" == "0" ]]; then
 	for i in *; do
 		FILES+=("$i")
 		if [[ "${#FILES[@]}" == "$number" ]]; then
+			echo "*************************************" >> "$log_file"
+			echo "* Date  : $(date +%c)" >> "$log_file"
+			echo "* Images: ${FILES[*]}" >> "$log_file"
+			echo "*************************************" >> "$log_file"
 			build_hdr "${FILES[@]}"
 			FILES=()
 		fi
