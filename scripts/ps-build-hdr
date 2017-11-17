@@ -80,43 +80,50 @@ done
 
 shift
 
-luminance_hdr_cli=$(which luminance-hdr-cli 2>/dev/null)
-if [[ "$luminance_hdr_cli" == "" ]]; then
-	echo "ERROR: luminance_hdr_cli is not found"
-	exit 1
-fi
-
-gimp=$(which gimp 2>/dev/null)
-if [[ "$gimp" == "" ]]; then
-	echo "ERROR: gimp is not found"
-	exit 1
-fi
-
 number=${number:=3}
-hdr_options="weight=gaussian:response_curve=gamma:model=debevec"
-ashikhmin_options="localcontrast=0:eq=4:simple=false"
-mantiuk08_options="colorsaturation=1:contrastenhancement=1:luminancelevel=1:setluminance=false"
 log_file="$HOME/.ps-build-hdr.log"
-gimp_script=$(cat <<-END
-(define (build-hdr m a ma40)
-(let* (
-    (img (car (gimp-file-load 1 m m)))
-    (drawable (car (gimp-image-get-active-layer img)))
-    (a-layer (car (gimp-file-load-layer 1 img a)))
-    )
-    (gimp-image-insert-layer img a-layer 0 -1)
-    (gimp-layer-set-opacity a-layer 40)
-    (gimp-layer-set-mode a-layer 3)
-    (gimp-file-save 1 img (car (gimp-image-merge-visible-layers img 0)) ma40 ma40)
-))
-END
-)
 
 log() {
 	echo "$1"
 	echo "$1" >> $log_file
 }
 
+# Check if liminance-hdr installed
+defineLuminanceHdrCli() {
+	luminance_hdr_cli=$(which luminance-hdr-cli 2>/dev/null)
+	if [[ "$luminance_hdr_cli" == "" ]]; then
+		log "ERROR: luminance_hdr_cli is not found"
+		exit 1
+	fi
+
+	hdr_options="weight=gaussian:response_curve=gamma:model=debevec"
+	ashikhmin_options="localcontrast=0:eq=4:simple=false"
+	mantiuk08_options="colorsaturation=1:contrastenhancement=1:luminancelevel=1:setluminance=false"
+}
+
+# Check if gimp installed
+defineGimp() {
+	gimp=$(which gimp 2>/dev/null)
+	if [[ "$gimp" == "" ]]; then
+		log "ERROR: gimp is not found"
+		exit 1
+	fi
+
+	gimp_script=$(cat <<-END
+	(define (build-hdr m a ma40)
+	(let* (
+		(img (car (gimp-file-load 1 m m)))
+		(drawable (car (gimp-image-get-active-layer img)))
+		(a-layer (car (gimp-file-load-layer 1 img a)))
+	)
+	(gimp-image-insert-layer img a-layer 0 -1)
+	(gimp-layer-set-opacity a-layer 40)
+	(gimp-layer-set-mode a-layer 3)
+	(gimp-file-save 1 img (car (gimp-image-merge-visible-layers img 0)) ma40 ma40)
+	))
+	END
+	)
+}
 
 build_hdr() {
 	local tmpdir hdr_file ashikhmin_file mantiuk08_file output_file
@@ -164,6 +171,10 @@ build_hdr() {
 
 	rm -rf "$TMPDIR"
 }
+
+defineLuminanceHdrCli
+defineGimp
+
 if [[ "$#" == "0" ]]; then
 	FILES=()
 	for i in *; do
