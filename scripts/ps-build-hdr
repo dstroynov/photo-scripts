@@ -96,9 +96,17 @@ defineLuminanceHdrCli() {
 		exit 1
 	fi
 
-	hdr_options="weight=gaussian:response_curve=gamma:model=debevec"
-	ashikhmin_options="localcontrast=0:eq=4:simple=false"
-	mantiuk08_options="colorsaturation=1:contrastenhancement=1:luminancelevel=1:setluminance=false"
+	# default options are for version 2.3
+	hdr_options=("-c" "weight=gaussian:response_curve=gamma:model=debevec")
+	ashikhmin_options=("-t" "ashikhmin" "-p" "localcontrast=0:eq=4:simple=false")
+	mantiuk08_options=("-t" "mantiuk08" "-p" "colorsaturation=1:contrastenhancement=1:luminancelevel=1:setluminance=false")
+
+	# for version 2.5 arguments are changed
+	if  [[ "$($luminance_hdr_cli -V 2>&1 | grep 'version 2.5' | wc -l)" == "1" ]]; then
+		hdr_options=("--hdrWeight=gaussian" "--hdrResponseCurve=gamma" "--hdrModel=debevec")
+		ashikhmin_options=("--tmo" "ashikhmin" "--tmoAshLocal=0" "--tmoAshEq2=false" "--tmoAshSimple=false")
+		mantiuk08_options=("--tmo" "mantiuk08" "--tmoM08ColorSaturation=1" "--tmoM08ConstrastEnh=1" "--tmoM08SetLuminance=false")
+	fi
 }
 
 # Check if gimp installed
@@ -134,28 +142,28 @@ build_hdr() {
 	output_file=$(pwd)/${1%.*}.ma40.jpg
 
 	log "Creating HDR-file"
-	"$luminance_hdr_cli" -a AIS -c $hdr_options -s "$hdr_file" "$@" >> "$log_file" 2>&1
+	"$luminance_hdr_cli" -a AIS ${hdr_options[*]} -s "$hdr_file" "$@" >> "$log_file" 2>&1
 	if [[ $? != 0 ]]; then
 		echo "Error while executing the following command:"
-		echo "$luminance_hdr_cli" -a AIS -c $hdr_options -s "$hdr_file" "$@"
+		echo "$luminance_hdr_cli" -a AIS ${hdr_options[*]} -s "$hdr_file" "$@"
 		echo "To get more information about the error read $log_file"
 		exit 1;
 	fi
 
 	log "Making Ashikhmin layer"
-	"$luminance_hdr_cli" -l "$hdr_file" -t ashikhmin -p $ashikhmin_options -o "$ashikhmin_file" >> "$log_file" 2>&1
+	"$luminance_hdr_cli" -l "$hdr_file" ${ashikhmin_options[*]} -o "$ashikhmin_file" >> "$log_file" 2>&1
 	if [[ $? != 0 ]]; then
 		echo "Error while executing the following command:"
-		echo "$luminance_hdr_cli" -l "$hdr_file" -t ashikhmin -p $ashikhmin_options -o "$ashikhmin_file"
+		echo "$luminance_hdr_cli" -l "$hdr_file" ${ashikhmin_options[*]} -o "$ashikhmin_file"
 		echo "To get more information about the error read $log_file"
 		exit 1;
 	fi
 
 	log "Making Mantiuk08 layer"
-	"$luminance_hdr_cli" -l "$hdr_file" -t mantiuk08 -p $mantiuk08_options -o "$mantiuk08_file" >> "$log_file" 2>&1
+	"$luminance_hdr_cli" -l "$hdr_file" ${mantiuk08_options[*]} -o "$mantiuk08_file" >> "$log_file" 2>&1
 	if [[ $? != 0 ]]; then
 		echo "Error while executing the following command:"
-		echo "$luminance_hdr_cli" -l "$hdr_file" -t mantiuk08 -p $mantiuk08_options -o "$mantiuk08_file"
+		echo "$luminance_hdr_cli" -l "$hdr_file" ${mantiuk08_options[*]} -o "$mantiuk08_file"
 		echo "To get more information about the error read $log_file"
 		exit 1;
 	fi
