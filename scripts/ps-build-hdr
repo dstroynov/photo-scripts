@@ -133,6 +133,17 @@ defineGimp() {
 	)
 }
 
+# Check if hugin installed
+defineAlignEngine() {
+	align_image_stack=$(which align_image_stack 2>/dev/null)
+	if [[ "$align_image_stack" == "" ]]; then
+		log "hugin is not installed, using MTB as an align engine"
+		align_engine='MTB'
+	else
+		align_engine='AIS'
+	fi
+}
+
 build_hdr() {
 	local tmpdir hdr_file ashikhmin_file mantiuk08_file output_file
 	tmpdir=$(mktemp -d)
@@ -142,10 +153,10 @@ build_hdr() {
 	output_file=$(pwd)/${1%.*}.ma40.jpg
 
 	log "Creating HDR-file"
-	"$luminance_hdr_cli" -a AIS ${hdr_options[*]} -s "$hdr_file" "$@" >> "$log_file" 2>&1
+	"$luminance_hdr_cli" -a "$align_engine" ${hdr_options[*]} -s "$hdr_file" -e "$joinedEv" "$@" >> "$log_file" 2>&1
 	if [[ $? != 0 ]]; then
 		echo "Error while executing the following command:"
-		echo "$luminance_hdr_cli" -a AIS ${hdr_options[*]} -s "$hdr_file" "$@"
+		echo "$luminance_hdr_cli" -a "$align_engine" ${hdr_options[*]} -s "$hdr_file" -e "$joinedEv" "$@"
 		echo "To get more information about the error read $log_file"
 		exit 1;
 	fi
@@ -182,6 +193,7 @@ build_hdr() {
 
 defineLuminanceHdrCli
 defineGimp
+defineAlignEngine
 
 if [[ "$#" == "0" ]]; then
 	FILES=()
