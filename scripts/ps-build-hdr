@@ -232,7 +232,7 @@ build_hdr() {
 	hdr_file=$tmpdir/temp.hdr
 	ashikhmin_file=$tmpdir/ashikhmin.jpg
 	mantiuk08_file=$tmpdir/mantiuk08.jpg
-	output_file=$(pwd)/${1%.*}.ma40.jpg
+	output_file=$(pwd)/${1%.*}.hdr.jpg
 	joinedEv=$(joinEv "$@")
 
 	log "Creating HDR-file"
