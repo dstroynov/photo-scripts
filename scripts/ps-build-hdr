@@ -1,58 +1,58 @@
 #!/bin/bash
 # NAME
-#        ps-build-hdr - Build HDR-photos from a set of photos
+#	ps-build-hdr - Build HDR-photos from a set of photos
 #
 # SYNOPSIS
-#        ps-build-hdr -n|--number NUMBER
-#        ps-build-hdr -h|--help|--usage
-#        ps-build-hdr [FILENAME]...
+#	ps-build-hdr -n|--number NUMBER
+#	ps-build-hdr -h|--help|--usage
+#	ps-build-hdr [FILENAME]...
 #
 # DESCRIPTION
-#        Build HDR-photos from the photos in current directory by NUMBER photos
-#        in each set. It is supposed that current directory contains photos only
-#        and in each set there is the same photo is presented but made with
-#        different exposures. The processing is based on the article of Dr.Lex
-#        https://www.dr-lex.be/info-stuff/luminancehdr.html and automated.
-#        The default number in each set is 3 as it is a usual bracketing number
-#        for most cameras. It is also possible to process not the whole
-#        directory but any number of given photos.
+#	Build HDR-photos from the photos in current directory by NUMBER photos
+#	in each set. It is supposed that current directory contains photos only
+#	and in each set there is the same photo is presented but made with
+#	different exposures. The processing is based on the article of Dr.Lex
+#	https://www.dr-lex.be/info-stuff/luminancehdr.html and automated.
+#	The default number in each set is 3 as it is a usual bracketing number
+#	for most cameras. It is also possible to process not the whole
+#	directory but any number of given photos.
 #
-#        -n, --number
-#                A number of photos is each set (default 3).
+#	-n, --number
+#		A number of photos is each set (default 3).
 #
-#        -h, --help, --usage
-#                Display this information and quit.
-#        FILENAME
-#                A set of photo filenames.
+#	-h, --help, --usage
+#		Display this information and quit.
+#	FILENAME
+#		A set of photo filenames.
 #
 # EXAMPLES
-#        ps_build-hdr
-#               Build HDR-photos from the current directory by 3 in a set.
+#	ps_build-hdr
+#		Build HDR-photos from the current directory by 3 in a set.
 #
-#        ps-buld-hdr --number 5
-#               Build HDR-photos from the current directory by 5 in a set.
+#	ps-buld-hdr --number 5
+#		Build HDR-photos from the current directory by 5 in a set.
 #
-#        ps-buld-hdr photo1.jpg photo2.jpg ../photo3.jpg
-#               Build an HDR-photo from 3 provided photos.
+#	ps-buld-hdr photo1.jpg photo2.jpg ../photo3.jpg
+#		Build an HDR-photo from 3 provided photos.
 #
 ################################################################################
 
 trap "exit;" SIGINT SIGTERM
 
 usage() {
-    while IFS= read -r line || [ -n "$line" ]
-    do
-        case "$line" in
-            '#!'*) # Shebang line
-                ;;
-            ''|'##'*|[!#]*) # End of comments
-                exit
-                ;;
-            *) # Comment line
-                printf '%s\n' "$line" >&2 # Remove comment prefix
-                ;;
-        esac
-    done < "$1"
+	while IFS= read -r line || [ -n "$line" ]
+	do
+		case "$line" in
+			'#!'*) # Shebang line
+				;;
+			''|'##'*|[!#]*) # End of comments
+				exit
+				;;
+			*) # Comment line
+				printf '%s\n' "$line" >&2 # Remove comment prefix
+				;;
+		esac
+	done < "$1"
 }
 
 # Process parameters
@@ -63,19 +63,19 @@ unset params
 
 while true
 do
-    case $1 in
-        -n|--number)
-            number=${2-}
-            shift 2
-            ;;
-        -h|--help|--usage)
-            usage "$0"
-            exit
-            ;;
-        *)
-            break
-            ;;
-    esac
+	case $1 in
+		-n|--number)
+			number=${2-}
+			shift 2
+			;;
+		-h|--help|--usage)
+			usage "$0"
+			exit
+			;;
+		*)
+			break
+			;;
+	esac
 done
 
 shift
