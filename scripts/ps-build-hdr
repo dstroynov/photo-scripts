@@ -144,13 +144,96 @@ defineAlignEngine() {
 	fi
 }
 
+checkEVvalues() {
+	log "check EV values"
+	local min max
+	IFS=$'\n'
+	min=$(IFS=$'\n'; echo "${ev[*]}" | sort -n | head -n1)
+	max=$(IFS=$'\n'; echo "${ev[*]}" | sort -nr | head -n1)
+	if [[ $(awk "BEGIN{print ($max > 10)}") -eq 1 ]]; then
+		for i in "$@"; do
+			ev[$i]=$(awk "BEGIN{print ${ev[$i]} - $max + 10}");
+			log "$i: ${ev[$i]}"
+		done
+	else
+		if [[ $(awk "BEGIN{print ($min < -10)}") -eq 1 ]]; then
+			for i in "$@"; do
+				ev[$i]=$(awk "BEGIN{print ${ev[$i]} - $min - 10}");
+				log "$i: ${ev[$i]}"
+			done
+		fi
+	fi
+}
+
+calcEv() {
+	local exposure_time iso aperture ev
+	exposure_time=$(awk "BEGIN{print $1}")
+	iso=$(awk "BEGIN{print $2}")
+	aperture=$(awk "BEGIN{print $3}")
+	ev=$(awk "BEGIN{print log($exposure_time * $iso / $aperture / $aperture / 12.07488) / log(2)}")
+	printf "%s" "$ev"
+}
+
+setEVwithIdentify() {
+	local exposure_time iso aperture
+	exposure_time=$(identify -verbose "$1" | sed -n 's/^\ *exif:ExposureTime:\ //p')
+	iso=$(identify -verbose "$1" | sed -n 's/^\ *exif:ISOSpeedRatings:\ //p')
+	aperture=$(identify -verbose "$1" | sed -n 's/^\ *exif:FNumber:\ //p')
+	calcEv $exposure_time $iso $aperture
+}
+
+setEVwithExiv2() {
+	local exposure_time iso aperture
+	exposure_time=$(exiv2 "$1" | sed -n 's/^Exposure time\ *:\ \(.*\)s$/\1/p')
+	iso=$(exiv2 "$1" | sed -n 's/^ISO\ speed\ *:\ \(.*\)$/\1/p')
+	aperture=$(exiv2 "$1" | sed -n 's/^Aperture\ *:\ F\(.*\)$/\1/p')
+	calcEv $exposure_time $iso $aperture
+}
+
+declare -A ev=()
+setEV() {
+	which exiv2 > /dev/null 2>&1
+	if [[ $? -eq 0 ]]; then
+		log "calculate EV with exiv2"
+		for i in "$@"; do
+			ev[$i]=$(setEVwithExiv2 "$i")
+			log "$i: ${ev[$i]}"
+		done
+	else
+		which identify > /dev/null 2>&1
+		if [[ $? -eq 0 ]]; then
+			log "calculate EV with identify"
+			for i in "$@"; do
+				ev[$i]=$(setEVwithIdentify "$i")
+				log "$i: ${ev[$i]}"
+			done
+		else
+			log "ERROR: neither exiv2 nor identify is found"
+			exit 1
+		fi
+	fi
+	checkEVvalues "$@"
+}
+
+function joinEv {
+	local args=()
+	for i in "$@"; do
+		args+=("${ev[$i]}")
+	done
+	local IFS=,
+	echo "${args[*]}"
+}
+
+# Main script to build HDR-image
 build_hdr() {
+	setEV "$@"
 	local tmpdir hdr_file ashikhmin_file mantiuk08_file output_file
 	tmpdir=$(mktemp -d)
 	hdr_file=$tmpdir/temp.hdr
 	ashikhmin_file=$tmpdir/ashikhmin.jpg
 	mantiuk08_file=$tmpdir/mantiuk08.jpg
 	output_file=$(pwd)/${1%.*}.ma40.jpg
+	joinedEv=$(joinEv "$@")
 
 	log "Creating HDR-file"
 	"$luminance_hdr_cli" -a "$align_engine" ${hdr_options[*]} -s "$hdr_file" -e "$joinedEv" "$@" >> "$log_file" 2>&1
