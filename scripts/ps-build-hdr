@@ -3,9 +3,9 @@
 #	ps-build-hdr - Build HDR-photos from a set of photos
 #
 # SYNOPSIS
-#	ps-build-hdr -n|--number NUMBER
+#	ps-build-hdr [-k|--keep-hdr] -n|--number NUMBER
 #	ps-build-hdr -h|--help|--usage
-#	ps-build-hdr [FILENAME]...
+#	ps-build-hdr [-k|--keep-hdr] [FILENAME]...
 #
 # DESCRIPTION
 #	Build HDR-photos from the photos in current directory by NUMBER photos
@@ -16,6 +16,10 @@
 #	The default number in each set is 3 as it is a usual bracketing number
 #	for most cameras. It is also possible to process not the whole
 #	directory but any number of given photos.
+#
+#	-k, --keep-hdr
+#		if set, the intermediate hdr-file is not deleted and copied to
+#		the output directory.
 #
 #	-n, --number
 #		A number of photos is each set (default 3).
@@ -32,8 +36,8 @@
 #	ps-buld-hdr --number 5
 #		Build HDR-photos from the current directory by 5 in a set.
 #
-#	ps-buld-hdr photo1.jpg photo2.jpg ../photo3.jpg
-#		Build an HDR-photo from 3 provided photos.
+#	ps-buld-hdr -k photo1.jpg photo2.jpg ../photo3.jpg
+#		Build an HDR-photo from 3 provided photos and save an HDR-file.
 #
 ################################################################################
 
@@ -56,7 +60,7 @@ usage() {
 }
 
 # Process parameters
-params="$(getopt -o n:,h -l number:,help,usage --name '$cmdname' -- "$@")"
+params="$(getopt -o n:,k,h -l number:,keep-hdr,help,usage --name '$cmdname' -- "$@")"
 [ $? -ne 0 ] && usage "$0"
 eval set -- "$params"
 unset params
@@ -67,6 +71,10 @@ do
 		-n|--number)
 			number=${2-}
 			shift 2
+			;;
+		-k|--keep-hdr)
+			keep_hdr=true
+			shift
 			;;
 		-h|--help|--usage)
 			usage "$0"
@@ -80,6 +88,7 @@ done
 
 shift
 
+keep_hdr=${keep_hdr:=false}
 number=${number:=3}
 log_file="$HOME/.ps-build-hdr.log"
 
@@ -269,6 +278,10 @@ build_hdr() {
 		echo "$gimp " -i -b "$gimp_script"' (build-hdr "'"$mantiuk08_file"'" "'"$ashikhmin_file"'" "'"$output_file"'")' -b '(gimp-quit 0)'
 		echo "To get more information about the error read $log_file"
 		exit 1;
+	fi
+
+	if [[ "$keep_hdr" == "true" ]]; then
+		mv $hdr_file $(pwd)/${1%.*}.hdr
 	fi
 
 	rm -rf "$TMPDIR"
