@@ -11,9 +11,9 @@ A set of useful scripts for photo processing.
 Build HDR-photos from a set of photos
 
 #### Synopsis
-    ps-build-hdr -n|--number NUMBER
+    ps-build-hdr [-k|--keep-hdr] -n|--number NUMBER
     ps-build-hdr -h|--help|--usage
-    ps-build-hdr [FILENAME]...
+    ps-build-hdr [-k|--keep-hdr] [FILENAME]...
 
 #### Description
 Build HDR-photos from the photos in current directory by NUMBER photos
@@ -26,11 +26,12 @@ for most cameras. It is also possible to process not the whole
 directory but any number of given photos.
 
 #### Parameters
-|Parameter|Description|
-|---------|-----------|
-|-n NUMBER, --number NUMBER | A number of photos is each set (default 3) |
-|-h, --help, --usage        | Display this information and quit |
-|FILENAME                   | A set of photo filenames |
+|Parameter                  |Description                                                                           |
+|---------------------------|--------------------------------------------------------------------------------------|
+|-k, --keep-hdr             | If set, the intermediate hdr-file is not deleted and copied to the output directory. |
+|-n NUMBER, --number NUMBER | A number of photos is each set (default 3)                                           |
+|-h, --help, --usage        | Display this information and quit                                                    |
+|FILENAME                   | A set of photo filenames                                                             |
 
 #### Examples
         ps_build-hdr
@@ -39,5 +40,5 @@ directory but any number of given photos.
         ps-buld-hdr --number 5
                Build HDR-photos from the current directory by 5 in a set.
 
-        ps-buld-hdr photo1.jpg photo2.jpg ../photo3.jpg
-               Build an HDR-photo from 3 provided photos.
+        ps-buld-hdr -k photo1.jpg photo2.jpg ../photo3.jpg
+               Build an HDR-photo from 3 provided photos and save an HDR-file.

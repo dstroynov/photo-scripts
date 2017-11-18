@@ -18,7 +18,7 @@
 #	directory but any number of given photos.
 #
 #	-k, --keep-hdr
-#		if set, the intermediate hdr-file is not deleted and copied to
+#		If set, the intermediate hdr-file is not deleted and copied to
 #		the output directory.
 #
 #	-n, --number
