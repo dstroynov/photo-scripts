@@ -297,7 +297,7 @@ build_hdr() {
 		mv $hdr_file $(pwd)/${1%.*}.hdr
 	fi
 
-	rm -rf "$TMPDIR"
+	rm -rf "$tmpdir"
 }
 
 defineLuminanceHdrCli
