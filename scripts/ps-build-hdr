@@ -245,7 +245,7 @@ function joinEv {
 build_hdr() {
 	setEV "$@"
 	local tmpdir hdr_file ashikhmin_file mantiuk08_file output_file
-	tmpdir=$(mktemp -d)
+	tmpdir=$(mktemp -d -t ps.${1%.*}.hdr.XXXXXXXXXX)
 	hdr_file=$tmpdir/temp.hdr
 	ashikhmin_file=$tmpdir/ashikhmin.jpg
 	mantiuk08_file=$tmpdir/mantiuk08.jpg
