@@ -142,6 +142,14 @@ defineGimp() {
 	)
 }
 
+# Check if exiftool installed (optional)
+defineExiftool() {
+	exiftool=$(which exiftool 2>/dev/null)
+	if [[ "$exiftool" == "" ]]; then
+		log "WARNING: exiftool is not found, EXIF data will be lost"
+	fi
+}
+
 # Check if hugin installed
 defineAlignEngine() {
 	align_image_stack=$(which align_image_stack 2>/dev/null)
@@ -280,6 +288,11 @@ build_hdr() {
 		exit 1;
 	fi
 
+	if [[ "$exiftool" != "" ]]; then
+		log "Copying EXIF"
+		exiftool -tagsFromFile "$1" -quiet -overwrite_original "$output_file"
+	fi
+
 	if [[ "$keep_hdr" == "true" ]]; then
 		mv $hdr_file $(pwd)/${1%.*}.hdr
 	fi
@@ -290,6 +303,7 @@ build_hdr() {
 defineLuminanceHdrCli
 defineGimp
 defineAlignEngine
+defineExiftool
 
 if [[ "$#" == "0" ]]; then
 	FILES=()
