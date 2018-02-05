@@ -294,7 +294,7 @@ build_hdr() {
 	fi
 
 	if [[ "$keep_hdr" == "true" ]]; then
-		mv $hdr_file $(pwd)/${1%.*}.hdr
+		mv $hdr_file "$(pwd)/${1%.*}.hdr"
 	fi
 
 	rm -rf "$tmpdir"
